@@ -1,0 +1,11 @@
+frontend/node_modules/
+frontend/.expo/
+backend/node_modules/
+backend/dist/
+.env
+frontend/.env
+backend/.env
+npm-debug.log*
+*.keystore
+*.jks
+.DS_Store
