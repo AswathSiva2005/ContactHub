@@ -1,234 +1,213 @@
 # ContactSync
 
-ContactSync is a production-oriented Expo/React Native application for importing student and parent contacts from Excel or CSV, storing synchronized metadata in MongoDB, and managing the resulting Android contacts. It includes phone-based accounts, per-user data isolation, offline reads, a durable ordered upload queue, automatic retry, light/dark themes, loading skeletons, global error recovery, and an Express REST API.
+ContactSync is an Expo/React Native Android app for teachers to import student and parent contacts from spreadsheets, synchronize metadata securely with a Railway-hosted Express API, and store data in MongoDB Atlas. Signed APK releases are distributed privately through WhatsApp, and the app checks the backend for future updates.
+
+## Architecture
+
+```text
+Android device → ContactSync APK → Railway HTTPS API (/api/v1) → MongoDB Atlas
+                     └──────────→ Android Contacts
+```
 
 ## Requirements
 
-- Node.js 20+
-- npm 10+
-- MongoDB Atlas or MongoDB 7+
-- Android Studio/SDK or Expo Go for local Android development
-- An Expo account and EAS CLI for signed production Android builds
-
-## Installation guide
-
-```bash
-git clone <repository-url>
-cd ContactHub
-cd backend
-npm ci
-copy .env.example .env
-cd ..\frontend
-npm ci
-copy .env.example .env
-```
-
-Set `MONGODB_URI` in `backend/.env`. Set `EXPO_PUBLIC_API_URL` to:
-
-- Android emulator: `http://10.0.2.2:4000/api/v1`
-- Physical device: `http://<computer-lan-ip>:4000/api/v1`
-- Production: `https://<api-domain>/api/v1`
-
-Never commit `.env`. Use an HTTPS API and a least-privilege MongoDB user in production.
-
-## Backend commands
-
-Run from `backend/`.
-
-| Command | Purpose |
-| --- | --- |
-| `npm ci` | Reproducible dependency installation |
-| `npm run dev` | Start API with TypeScript watch mode |
-| `npm run typecheck` | Strict TypeScript validation |
-| `npm run build` | Compile to `dist/` |
-| `npm run check` | Type-check and build |
-| `npm start` | Run the compiled server |
-| `docker build -t contactsync-api .` | Build production container |
-| `docker run --env-file .env -p 4000:4000 contactsync-api` | Run production container |
-
-## Frontend commands
-
-Run from `frontend/`.
-
-| Command | Purpose |
-| --- | --- |
-| `npm ci` | Reproducible dependency installation |
-| `npm start` | Start Expo development server |
-| `npm run android` | Open Android target |
-| `npm run typecheck` | Strict TypeScript validation |
-| `npm run lint` | Expo ESLint validation |
-| `npm run check` | Type-check and lint |
-| `npm run build:web` | Export optimized static web bundle |
-| `npx eas-cli build --platform android --profile preview` | Internal APK |
-| `npx eas-cli build --platform android --profile production` | Signed production AAB |
+- Node.js 20 or 22 and npm 10+
+- GitHub, Railway, MongoDB Atlas, and Expo accounts
+- EAS CLI and an Android 8+ test device
 
 ## Folder structure
 
 ```text
 ContactHub/
+├── .github/workflows/ci.yml
 ├── backend/
-│   ├── src/
-│   │   ├── config/       # environment and MongoDB
-│   │   ├── controllers/  # route handlers
-│   │   ├── middleware/   # errors, 404s, request context
-│   │   ├── models/       # Mongoose schemas and indexes
-│   │   ├── routes/       # versioned REST routes
-│   │   └── utils/        # pagination, regex, shutdown
-│   ├── postman/          # API test collection
-│   └── Dockerfile
+│   ├── src/{config,controllers,middleware,models,routes,utils}
+│   ├── Dockerfile
+│   ├── railway.json
+│   └── .env.example
 ├── frontend/
-│   ├── app/              # Expo Router screens
-│   ├── components/       # reusable UI, skeletons, boundaries
-│   ├── constants/        # Material themes
-│   ├── hooks/            # theme and sync state hooks
-│   ├── services/         # API, import, contacts, sync queue
-│   ├── storage/          # AsyncStorage repositories
-│   ├── types/            # TypeScript domain contracts
-│   └── utils/            # errors, names, dates
-└── README.md
+│   ├── app/
+│   ├── assets/
+│   ├── components/
+│   ├── services/
+│   ├── app.json
+│   ├── eas.json
+│   └── .env.example
+├── DEPLOYMENT.md
+└── LICENSE
 ```
 
-## API documentation
+## Local installation
 
-Base path: `/api/v1`. Successful responses use `{ "success": true, "data": ... }`. Errors use `{ "success": false, "error": { "message": "...", "requestId": "..." } }`. Lists include `pagination`; `limit` defaults to 50 and is capped at 200.
-
-Batch and contact endpoints require `Authorization: Bearer <session-token>`. Session tokens are returned only by registration/login, stored hashed in MongoDB, and expire after 30 days.
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| GET | `/health` | API, database, and timestamp status |
-| POST | `/auth/register` | Register with unique `phoneNumber` and `name` |
-| POST | `/auth/login` | Log in with the registered `name` and `phoneNumber` |
-| GET | `/auth/me` | Read the authenticated profile |
-| POST | `/auth/logout` | Revoke the current session |
-| POST | `/batches` | Create a batch |
-| GET | `/batches` | List; supports `search`, `sort`, `userDeviceId`, `page`, `limit` |
-| GET | `/batches/:batchId` | Read one batch |
-| PATCH | `/batches/:batchId` | Rename a batch |
-| DELETE | `/batches/:batchId` | Delete batch and its contacts |
-| DELETE | `/batches` | Delete all batches and contacts |
-| POST | `/contacts` | Create a contact pair in a batch |
-| GET | `/contacts` | List/search; supports `batchId`, `search`, `sort`, `page`, `limit` |
-| GET | `/contacts/:contactUuid` | Read one contact |
-| PATCH | `/contacts/:contactUuid` | Update a contact pair |
-| DELETE | `/contacts/:contactUuid` | Delete one contact pair |
-| DELETE | `/contacts/selected` | Delete 1–200 UUIDs; body `{ "contactUuids": [] }` |
-
-Create batch body:
-
-```json
-{
-  "batchId": "uuid",
-  "batchName": "Class 10 A",
-  "academicYear": "2026-27",
-  "userDeviceId": "device-uuid"
-}
+```powershell
+git clone <your-repository-url>
+cd ContactHub\backend
+npm ci
+Copy-Item .env.example .env
+cd ..\frontend
+npm ci
+Copy-Item .env.example .env
 ```
 
-Create contact body:
+Use `http://10.0.2.2:4000/api/v1` for an Android emulator or the computer's LAN IP for a physical device.
 
-```json
-{
-  "contactUuid": "uuid",
-  "batchId": "uuid",
-  "studentName": "Student",
-  "parentName": "Parent",
-  "studentNumber": "+919000000001",
-  "parentNumber": "+919000000002",
-  "rollNumber": "12",
-  "studentPhoneContactId": "android-id",
-  "parentPhoneContactId": "android-id"
-}
+```powershell
+cd backend
+npm run dev
+
+# another terminal
+cd frontend
+npm start
 ```
-
-Import `backend/postman/ContactSync-Phase-2.postman_collection.json` for an executable request collection.
-
-## MongoDB collections
-
-### `batches`
-
-`batchId` (unique), `batchName`, `academicYear`, `createdDate`, `totalContacts`, `userDeviceId`, and owner `userId`. Indexes support owner/date and device/date listing.
-
-### `contacts`
-
-`contactUuid` (unique), student/parent names and normalized numbers, `rollNumber`, `batchId`, owner `userId`, Android contact IDs, and `createdDate`. Indexes support owner/batch/date, batch/roll, and text search. Batch contact counts are updated transactionally; Atlas deployments must support transactions.
-
-### `users`
-
-One document per registered account: display `name`, normalized internal `nameKey`, globally unique normalized `phoneNumber`, and timestamps.
-
-### `sessions`
-
-Opaque session-token hashes linked to `userId`, with `expiresAt`, `lastUsedAt`, and timestamps. A TTL index automatically removes expired sessions.
 
 ## Environment variables
 
 ### Backend
 
-| Variable | Required | Default | Notes |
-| --- | --- | --- | --- |
-| `MONGODB_URI` | Yes | — | MongoDB connection string |
-| `NODE_ENV` | No | `development` | Use `production` when deployed |
-| `PORT` | No | `4000` | 1–65535 |
-| `MONGODB_DB_NAME` | No | `contactsync` | Database name |
-| `CORS_ORIGIN` | Production | `*` | Comma-separated exact origins; wildcard is rejected in production |
-| `DNS_SERVERS` | No | empty | Comma-separated DNS override |
-
-### Frontend
-
-| Variable | Required | Notes |
+| Variable | Required | Production value |
 | --- | --- | --- |
-| `EXPO_PUBLIC_API_URL` | Yes | Versioned API URL; must be HTTPS in production |
+| `NODE_ENV` | Yes | `production` |
+| `PORT` | Railway sets it | Do not hard-code |
+| `MONGODB_URI` | Yes | Atlas SRV connection string |
+| `MONGODB_DB_NAME` | No | `contactsync` |
+| `CORS_ORIGIN` | Yes | Exact web origins; `contactsync://app` if there is no web client |
+| `RATE_LIMIT_WINDOW_MS` | No | `900000` |
+| `RATE_LIMIT_MAX` | No | `300` |
+| `AUTH_RATE_LIMIT_MAX` | No | `20` |
+| `MONGODB_CONNECT_RETRIES` | No | `10` |
+| `MONGODB_CONNECT_RETRY_DELAY_MS` | No | `5000` |
+| `APP_LATEST_VERSION` | Yes | For example `1.1.0` |
+| `APP_MINIMUM_VERSION` | Yes | Oldest allowed app version |
+| `APP_APK_DOWNLOAD_URL` | Yes | Public HTTPS APK URL |
+| `APP_RELEASE_NOTES` | Yes | Short plain-text release notes |
 
-`EXPO_PUBLIC_*` values are embedded in the client bundle and must never contain secrets.
+The frontend uses only `EXPO_PUBLIC_API_URL`. It is embedded in the APK, must end in `/api/v1`, and must use HTTPS in production. Never put secrets in an `EXPO_PUBLIC_*` value.
 
-## Offline, sync, and retry behavior
+## MongoDB Atlas setup
 
-The newest batch list and searchable contacts are cached on-device. Network/timeout/5xx failures during batch/contact uploads are stored in an ordered AsyncStorage queue. The app retries on launch, when returning to the foreground, every 30 seconds while active, or when the user taps **Retry**. Ordering ensures a queued batch is uploaded before its contacts. Non-retryable/conflicting operations are discarded so they cannot block later work; retryable operations are capped at eight attempts.
+1. Create a cluster that supports transactions.
+2. Create a dedicated user with read/write access only to `contactsync`.
+3. Allow Railway's egress range. If a stable range is unavailable, use `0.0.0.0/0` only with a strong generated password, least privilege, TLS, and credential rotation.
+4. Put the SRV URI in Railway as `MONGODB_URI`; URL-encode password special characters.
+5. Enable backups and alerts.
 
-Caches and queued writes are cleared when the authenticated account changes. Every database query and mutation is scoped by the server-side session `userId`; clients cannot select or override another owner.
+The API creates indexes at startup. Unique owner-scoped indexes reject duplicate batch IDs/names, contact UUIDs, and phone numbers. Queries are scoped to the authenticated user.
 
-## Production build and deployment
+## Railway deployment
 
-Backend:
+Set the Railway root directory to `backend`. The repository includes `railway.json`, a non-root production Dockerfile, dynamic `PORT`, MongoDB retry, graceful shutdown, and `/api/v1/health`.
 
-```bash
+```powershell
+npm install -g @railway/cli
+railway login
 cd backend
-npm ci
-npm run check
-docker build -t contactsync-api .
-docker run --env-file .env -p 4000:4000 contactsync-api
+railway init
+railway up
+railway domain
 ```
 
-Frontend Android:
+Set the variables from `backend/.env.example`, then verify:
 
-```bash
+```powershell
+Invoke-RestMethod https://YOUR-DOMAIN.up.railway.app/api/v1/health
+Invoke-RestMethod https://YOUR-DOMAIN.up.railway.app/api/version
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full runbook.
+
+## EAS Android builds
+
+Replace the placeholder Railway URL in `frontend/eas.json`, then:
+
+```powershell
+npm install --global eas-cli
 cd frontend
-npm ci
+eas login
+eas build:configure
 npm run check
-npx eas-cli login
-npx eas-cli build:configure
-npx eas-cli build --platform android --profile production
+npm run build:apk
 ```
 
-Frontend web:
+- `preview`: internal test APK.
+- `production-apk`: signed APK for WhatsApp.
+- `production`: signed AAB for possible future store use.
 
-```bash
-cd frontend
-npm run build:web
+Keep the EAS Android keystore safe. Every update must use the same signing key and a higher `android.versionCode`.
+
+## Release and automatic update process
+
+For release `1.1.0`:
+
+1. Change `frontend/app.json` `version` to `1.1.0`.
+2. Increase `android.versionCode` to `2`.
+3. Run `npm run check` and `npm run build:apk`.
+4. Create GitHub Release `v1.1.0` and upload the APK as `contactsync.apk`.
+5. Set Railway `APP_LATEST_VERSION=1.1.0`, the exact HTTPS release asset URL, and release notes.
+6. Redeploy Railway and test from the previous APK.
+7. Raise `APP_MINIMUM_VERSION` only when older versions must be blocked.
+
+At startup, the app calls `GET /api/v1/version`. Optional updates show **Update now** and **Later**. Versions below the minimum cannot dismiss the dialog. Android always requires the teacher to approve the system installer; silent APK replacement is not permitted.
+
+## WhatsApp installation guide
+
+1. Download `contactsync.apk` from WhatsApp.
+2. Tap the downloaded file.
+3. If blocked, open **Settings → Install unknown apps**, choose WhatsApp or the file manager, and enable **Allow from this source**.
+4. Return, tap **Install**, and open ContactSync.
+5. Allow Contacts access when prompted.
+6. Turn off **Allow from this source** afterward.
+
+For an update, tap **Update now** and confirm Android's **Update** prompt. App data remains because the package name and signing key stay unchanged. Do not uninstall first.
+
+## API documentation
+
+Base URL: `/api/v1`. Protected routes use `Authorization: Bearer <session-token>`.
+
+| Method | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/health` | No | API and database health |
+| GET | `/version` | No | Version policy, APK URL, notes |
+| POST | `/auth/register` | No | Create account |
+| POST | `/auth/login` | No | Create session |
+| GET/POST | `/batches` | Yes | List/create batches |
+| GET/PATCH/DELETE | `/batches/:batchId` | Yes | Batch operations |
+| GET/POST | `/contacts` | Yes | List/create contacts |
+| GET/PATCH/DELETE | `/contacts/:contactUuid` | Yes | Contact operations |
+| DELETE | `/contacts/selected` | Yes | Delete 1–200 contacts |
+
+Success is `{ "success": true, "data": ... }`; errors are `{ "success": false, "error": { "message": "...", "requestId": "..." } }`. An executable Postman collection is in `backend/postman`.
+
+## Security
+
+- HTTPS-only production client configuration.
+- Secrets remain in Railway and Atlas variables.
+- Helmet, compression, explicit CORS, global/auth rate limits.
+- JSON size limit, NoSQL operator sanitization, Mongoose validation.
+- Hashed random session tokens, per-user isolation, TTL expiry.
+- Request IDs, production-safe errors, retrying database startup, and graceful shutdown.
+
+## GitHub setup
+
+```powershell
+git add .
+git commit -m "Prepare ContactSync for production"
+git branch -M main
+git remote add origin https://github.com/OWNER/REPOSITORY.git
+git push -u origin main
 ```
 
-Deploy `frontend/dist/` to static hosting with SPA fallback enabled. Before release, configure HTTPS, explicit CORS origins, MongoDB network access, database backups, centralized logs, uptime monitoring against `/api/v1/health`, and store privacy/data-deletion disclosures. Rotate any credential that has ever appeared in source control.
+Protect `main`, require CI, enable security alerts, and never commit `.env`, keystores, APKs, or database exports.
 
-## Release verification
+## Troubleshooting
 
-```bash
-cd backend
-npm run check
-cd ..\frontend
-npm run check
-```
+- **Railway health fails:** confirm root directory `backend`, required variables, and Atlas network access.
+- **Atlas auth fails:** URL-encode the password and check database-user permissions.
+- **App cannot connect:** put the final HTTPS `/api/v1` URL in the EAS profile and rebuild.
+- **APK will not install:** enable unknown-app permission, confirm storage, signing key, and increasing version code.
+- **Installer does not open:** grant **Install unknown apps** to ContactSync and retry.
+- **No update dialog:** inspect `/api/v1/version`; latest must exceed the installed semantic version.
+- **Contacts denied:** use **ContactSync → Settings → Open Device Settings → Permissions → Contacts → Allow**.
 
-Then validate import, airplane-mode import/queued sync, app resume, duplicate handling, rename/edit/delete, light/dark/system themes, Android permission denial, and the production health endpoint on a real Android device.
-#   C o n t a c t H u b  
- 
+## License
+
+MIT — see [LICENSE](LICENSE).

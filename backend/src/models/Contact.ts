@@ -2,7 +2,7 @@ import { Schema, model, type InferSchemaType } from 'mongoose';
 
 const contactSchema = new Schema(
   {
-    contactUuid: { type: String, required: true, unique: true, trim: true, maxlength: 100, immutable: true },
+    contactUuid: { type: String, required: true, trim: true, maxlength: 100, immutable: true },
     studentName: { type: String, required: true, trim: true, minlength: 1, maxlength: 150 },
     parentName: { type: String, required: true, trim: true, minlength: 1, maxlength: 150 },
     studentNumber: { type: String, required: true, trim: true, minlength: 3, maxlength: 30 },
@@ -18,10 +18,11 @@ const contactSchema = new Schema(
   { versionKey: false, collection: 'contacts' },
 );
 
-contactSchema.index({ batchId: 1, createdDate: -1 });
+contactSchema.index({ userId: 1, contactUuid: 1 }, { unique: true });
 contactSchema.index({ userId: 1, batchId: 1, createdDate: -1 });
-contactSchema.index({ batchId: 1, rollNumber: 1 });
-contactSchema.index({ studentName: 'text', parentName: 'text', rollNumber: 'text' });
+contactSchema.index({ userId: 1, batchId: 1, rollNumber: 1 });
+contactSchema.index({ userId: 1, studentNumber: 1 }, { unique: true });
+contactSchema.index({ userId: 1, parentNumber: 1 }, { unique: true });
 
 export type ContactDocument = InferSchemaType<typeof contactSchema>;
 export const Contact = model('Contact', contactSchema);

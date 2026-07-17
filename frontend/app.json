@@ -3,21 +3,27 @@
     "name": "ContactSync",
     "slug": "contactsync",
     "version": "1.0.0",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "scheme": "contactsync",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "android": {
       "package": "com.contactsync.app",
+      "versionCode": 1,
+      "allowBackup": false,
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8F1FF"
       },
-      "permissions": ["READ_CONTACTS", "WRITE_CONTACTS"]
+      "permissions": ["READ_CONTACTS", "WRITE_CONTACTS", "READ_MEDIA_IMAGES", "READ_MEDIA_VISUAL_USER_SELECTED", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "INTERNET", "ACCESS_NETWORK_STATE", "VIBRATE", "REQUEST_INSTALL_PACKAGES"],
+      "intentFilters": [{"action": "VIEW", "autoVerify": false, "data": [{"scheme": "contactsync"}], "category": ["BROWSABLE", "DEFAULT"]}]
     },
     "plugins": [
       "expo-router",
-      ["expo-splash-screen", {"backgroundColor": "#1565C0", "imageWidth": 160}],
-      ["expo-contacts", {"contactsPermission": "Allow ContactSync to save and manage imported student and parent contacts."}]
+      ["expo-splash-screen", {"backgroundColor": "#1456C0", "image": "./assets/splash-icon.png", "imageWidth": 220, "resizeMode": "contain"}],
+      ["expo-contacts", {"contactsPermission": "Allow ContactSync to save and manage the student and parent contacts you import."}],
+      ["expo-notifications", {"icon": "./assets/notification-icon.png", "color": "#1456C0"}]
     ],
     "experiments": {"typedRoutes": true}
   }

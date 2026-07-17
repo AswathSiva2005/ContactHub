@@ -1,4 +1,5 @@
 import cors from 'cors';
+import compression from 'compression';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -11,6 +12,9 @@ import { contactRouter } from './routes/contactRoutes.js';
 import { requestContext } from './middleware/requestContext.js';
 import { authRouter } from './routes/authRoutes.js';
 import { requireAuth } from './middleware/requireAuth.js';
+import { apiRateLimit } from './middleware/rateLimits.js';
+import { sanitizeRequest } from './middleware/sanitizeRequest.js';
+import { versionRouter } from './routes/versionRoutes.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -24,9 +28,14 @@ app.use(cors({
   },
   maxAge: 86400,
 }));
+app.use(compression());
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+app.use(sanitizeRequest);
+app.use('/api', apiRateLimit);
 app.use('/api/v1/health', healthRouter);
+app.use('/api/v1/version', versionRouter);
+app.use('/api/version', versionRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/batches', requireAuth, batchRouter);
 app.use('/api/v1/contacts', requireAuth, contactRouter);

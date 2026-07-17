@@ -17,6 +17,7 @@ import { getErrorMessage } from '@/utils/errors';
 import { softShadow } from '@/constants/ui';
 import { STORAGE_KEYS } from '@/storage/keys';
 import { useAuth } from '@/hooks/useAuth';
+import { VersionService } from '@/services/VersionService';
 
 const EMPTY = { backendOnline: false, mongoConnected: false, totalContacts: 0, totalBatches: 0, storageBytes: 0 };
 type Status = typeof EMPTY;
@@ -113,7 +114,7 @@ export default function SettingsScreen() {
       <Card style={styles.card}>
         <List.Item title="Privacy" left={(p) => <List.Icon {...p} icon="shield-lock-outline" />} onPress={() => setDialog('privacy')} /><Divider />
         <List.Item title="Rate App" left={(p) => <List.Icon {...p} icon="star-outline" />} onPress={() => void Linking.openURL('market://details?id=com.contactsync.app').catch(() => setMessage('The app store is not available on this device.'))} /><Divider />
-        <List.Item title="About ContactSync" description="Version 1.0.0" left={(p) => <List.Icon {...p} icon="information-outline" />} onPress={() => setDialog('about')} />
+        <List.Item title="About ContactSync" description={`Version ${VersionService.currentVersion()}`} left={(p) => <List.Icon {...p} icon="information-outline" />} onPress={() => setDialog('about')} />
       </Card>
     </Screen>
     <Portal>
@@ -137,7 +138,7 @@ export default function SettingsScreen() {
         <Dialog.Actions><Button onPress={() => setDialog('')}>Cancel</Button><Button textColor={theme.colors.error} disabled={!deletePhone.trim()} onPress={deleteEverything}>Delete Everything</Button></Dialog.Actions>
       </Dialog>
       <Dialog visible={dialog === 'privacy'} onDismiss={() => setDialog('')}><Dialog.Title>Privacy</Dialog.Title><Dialog.Content><Text>Contact permission is used only to create and manage contacts you import. Spreadsheet data is sent to your configured MongoDB backend and cached locally for search. ContactSync does not sell personal data.</Text></Dialog.Content><Dialog.Actions><Button onPress={() => setDialog('')}>Close</Button></Dialog.Actions></Dialog>
-      <Dialog visible={dialog === 'about'} onDismiss={() => setDialog('')}><Dialog.Title>ContactSync</Dialog.Title><Dialog.Content><Text>Version 1.0.0{'\n\n'}Import, organize, search, and synchronize class contacts from Excel.</Text></Dialog.Content><Dialog.Actions><Button onPress={() => setDialog('')}>Close</Button></Dialog.Actions></Dialog>
+      <Dialog visible={dialog === 'about'} onDismiss={() => setDialog('')}><Dialog.Title>ContactSync</Dialog.Title><Dialog.Content><Text>Version {VersionService.currentVersion()}{'\n\n'}Import, organize, search, and synchronize class contacts from Excel.</Text></Dialog.Content><Dialog.Actions><Button onPress={() => setDialog('')}>Close</Button></Dialog.Actions></Dialog>
       <Snackbar visible={Boolean(message)} onDismiss={() => setMessage('')} duration={5000}>{message}</Snackbar>
     </Portal>
   </>;

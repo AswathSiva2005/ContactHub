@@ -10,6 +10,7 @@ import { SyncBanner } from '@/components/SyncBanner';
 import { AuthProvider } from '@/hooks/useAuth';
 import { AuthGate } from '@/components/AuthGate';
 import { ProfileButton } from '@/components/ProfileButton';
+import { AppUpdateDialog } from '@/components/AppUpdateDialog';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -23,6 +24,7 @@ export default function RootLayout() {
             <AuthProvider><AuthGate>
             <StatusBar style={theme.dark ? 'light' : 'dark'} />
             <SyncBanner />
+            <AppUpdateDialog />
             <Stack screenOptions={{ headerStyle: { backgroundColor: theme.colors.background }, headerTintColor: theme.colors.onSurface, headerTitleAlign: 'center', headerTitleStyle: { fontWeight: '700' }, headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false, headerRight: () => <ProfileButton />, contentStyle: { backgroundColor: theme.colors.background }, animation: 'slide_from_right' }}>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="login" options={{ headerShown: false }} />

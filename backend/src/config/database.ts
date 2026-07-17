@@ -11,17 +11,29 @@ export async function connectDatabase(): Promise<void> {
     dns.setServers(env.dnsServers);
   }
   mongoose.set('strictQuery', true);
-  await mongoose.connect(env.mongoUri, {
-    dbName: env.mongoDbName,
-    serverSelectionTimeoutMS: 10_000,
-    maxPoolSize: 20,
-    minPoolSize: env.nodeEnv === 'production' ? 2 : 0,
-    maxIdleTimeMS: 60_000,
-  });
-  if (env.nodeEnv !== 'production') {
-    await Promise.all([Batch.createCollection(), Contact.createCollection(), User.createCollection(), Session.createCollection()]);
-    await Promise.all([Batch.syncIndexes(), Contact.syncIndexes(), User.syncIndexes(), Session.syncIndexes()]);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= env.mongoConnectRetries; attempt += 1) {
+    try {
+      await mongoose.connect(env.mongoUri, {
+        dbName: env.mongoDbName,
+        serverSelectionTimeoutMS: 10_000,
+        maxPoolSize: 20,
+        minPoolSize: env.nodeEnv === 'production' ? 2 : 0,
+        maxIdleTimeMS: 60_000,
+      });
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      console.error(`MongoDB connection attempt ${attempt}/${env.mongoConnectRetries} failed`);
+      if (attempt < env.mongoConnectRetries) {
+        await new Promise((resolve) => setTimeout(resolve, env.mongoConnectRetryDelayMs));
+      }
+    }
   }
+  if (lastError) throw lastError;
+  await Promise.all([Batch.createCollection(), Contact.createCollection(), User.createCollection(), Session.createCollection()]);
+  await Promise.all([Batch.createIndexes(), Contact.createIndexes(), User.createIndexes(), Session.createIndexes()]);
   console.info(`MongoDB connected to ${env.mongoDbName}`);
 }
 
