@@ -1,7 +1,5 @@
 import * as Application from 'expo-application';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as IntentLauncher from 'expo-intent-launcher';
-import { Linking, Platform } from 'react-native';
+import { Linking } from 'react-native';
 import { api } from '@/services/api';
 
 export interface VersionInfo {
@@ -42,28 +40,8 @@ export const VersionService = {
     };
   },
 
-  async downloadAndInstall(update: VersionInfo, onProgress: (progress: number) => void): Promise<void> {
+  async openDownload(update: VersionInfo): Promise<void> {
     if (!update.apkDownloadUrl.startsWith('https://')) throw new Error('The update URL is not secure.');
-    if (Platform.OS !== 'android') {
-      await Linking.openURL(update.apkDownloadUrl);
-      return;
-    }
-    const destination = `${FileSystem.cacheDirectory}contactsync-${update.latestVersion}.apk`;
-    const download = FileSystem.createDownloadResumable(
-      update.apkDownloadUrl,
-      destination,
-      {},
-      ({ totalBytesWritten, totalBytesExpectedToWrite }) => {
-        if (totalBytesExpectedToWrite > 0) onProgress(totalBytesWritten / totalBytesExpectedToWrite);
-      },
-    );
-    const result = await download.downloadAsync();
-    if (!result?.uri) throw new Error('The APK download did not complete.');
-    const contentUri = await FileSystem.getContentUriAsync(result.uri);
-    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
-      data: contentUri,
-      flags: 1,
-      type: 'application/vnd.android.package-archive',
-    });
+    await Linking.openURL(update.apkDownloadUrl);
   },
 };

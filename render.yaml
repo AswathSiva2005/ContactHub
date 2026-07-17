@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: contactsync-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: contactsync
+      - key: CORS_ORIGIN
+        sync: false
+      - key: APP_LATEST_VERSION
+        value: 1.0.0
+      - key: APP_MINIMUM_VERSION
+        value: 1.0.0
+      - key: APP_APK_DOWNLOAD_URL
+        sync: false
+      - key: APP_RELEASE_NOTES
+        value: Initial production release.
