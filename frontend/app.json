@@ -16,15 +16,101 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8F1FF"
       },
-      "permissions": ["READ_CONTACTS", "WRITE_CONTACTS", "READ_MEDIA_IMAGES", "READ_MEDIA_VISUAL_USER_SELECTED", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "INTERNET", "ACCESS_NETWORK_STATE", "VIBRATE", "REQUEST_INSTALL_PACKAGES"],
-      "intentFilters": [{"action": "VIEW", "autoVerify": false, "data": [{"scheme": "contactsync"}], "category": ["BROWSABLE", "DEFAULT"]}]
+      "permissions": [
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VISUAL_USER_SELECTED",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE",
+        "REQUEST_INSTALL_PACKAGES",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VISUAL_USER_SELECTED",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE",
+        "REQUEST_INSTALL_PACKAGES",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "contactsync"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "contactsync"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
-      ["expo-splash-screen", {"backgroundColor": "#1456C0", "image": "./assets/splash-icon.png", "imageWidth": 220, "resizeMode": "contain"}],
-      ["expo-contacts", {"contactsPermission": "Allow ContactSync to save and manage the student and parent contacts you import."}],
-      ["expo-notifications", {"icon": "./assets/notification-icon.png", "color": "#1456C0"}]
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1456C0",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow ContactSync to save and manage the student and parent contacts you import."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1456C0"
+        }
+      ]
     ],
-    "experiments": {"typedRoutes": true}
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6c5de64c-a98c-4c59-9ed1-f3b1f58c86d5"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6c5de64c-a98c-4c59-9ed1-f3b1f58c86d5"
+    },
+    "ios": {}
   }
 }
